@@ -21,19 +21,23 @@ def get_gsheet_client():
         "https://www.googleapis.com/auth/spreadsheets",
         "https://www.googleapis.com/auth/drive",
     ]
-    # Load from Streamlit secrets
-    service_account_info = dict(st.secrets["google_service_account"])
 
-service_account_info = json.loads(json.dumps(st.secrets["google_service_account"]))
-st.write("--- DEBUG KEY START ---")
-st.write(repr(service_account_info["private_key"]))
-st.write("--- DEBUG KEY END ---")
+    if "google_service_account" in st.secrets:
+        # Load from Streamlit secrets
+        service_account_info = json.loads(json.dumps(st.secrets["google_service_account"]))
+        creds = Credentials.from_service_account_info(
+            service_account_info, scopes=scopes
+        )
+    else:
+        # Fallback for local dev with raw file
+        creds = Credentials.from_service_account_file(
+            "service_account.json",
+            scopes=scopes
+        )
 
-    creds = Credentials.from_service_account_info(
-        service_account_info, scopes=scopes
-    )
     client = gspread.authorize(creds)
     return client
+
 
 def get_worksheet(sheet_name, worksheet_name):
     client = get_gsheet_client()
