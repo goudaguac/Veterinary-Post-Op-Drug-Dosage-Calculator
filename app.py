@@ -7,9 +7,7 @@ from datetime import datetime
 st.set_page_config(page_title="Vet Post-Op Drug Dosage Calculator", layout="wide")
 st.title("🐾 Vet Post-Op Drug Dosage Calculator")
 
-# -----------------------------
 # Example drugs
-# -----------------------------
 DRUGS = {
     "Meloxicam": {
         "Dog": 0.2, "Cat": 0.05, "Bird": 0.1, "Unit": "mg/kg",
@@ -29,44 +27,32 @@ VET_TECHS = ["Alex Tan", "Jamie Lee", "Morgan Smith"]
 VETS = ["Dr. Wong", "Dr. Patel", "Dr. Fernandez"]
 
 # -----------------------------
-# Fake patient records store
+# Initialize patient records in session state
 # -----------------------------
-@st.cache_data
-def get_fake_records():
+if "patient_records" not in st.session_state:
     today = datetime.today().strftime("%Y-%m-%d")
-    data = {
+    st.session_state.patient_records = {
         "Dr. Wong": pd.DataFrame([
             {"Date": today, "Name": "Bella", "Species": "Dog", "Weight": 12.5,
              "Drug": "Meloxicam", "Dose_mg": 2.5, "Volume_mL": 0.5, "Vet_Tech": "Alex Tan",
              "Operation": "Spay"},
-            {"Date": today, "Name": "Shadow", "Species": "Cat", "Weight": 4.2,
-             "Drug": "Gabapentin", "Dose_mg": 31.5, "Volume_mL": 0.63, "Vet_Tech": "Jamie Lee",
-             "Operation": "Dental"}
         ]),
         "Dr. Patel": pd.DataFrame([
             {"Date": today, "Name": "Luna", "Species": "Bird", "Weight": 0.3,
              "Drug": "Meloxicam", "Dose_mg": 0.03, "Volume_mL": 0.01, "Vet_Tech": "Morgan Smith",
              "Operation": "Wing Repair"},
-            {"Date": today, "Name": "Ollie", "Species": "Dog", "Weight": 18.0,
-             "Drug": "Gabapentin", "Dose_mg": 270, "Volume_mL": 5.4, "Vet_Tech": "",
-             "Operation": ""}
         ]),
         "Dr. Fernandez": pd.DataFrame([
             {"Date": today, "Name": "Coco", "Species": "Cat", "Weight": 5.1,
              "Drug": "Meloxicam", "Dose_mg": 0.25, "Volume_mL": 0.05, "Vet_Tech": "Jamie Lee",
              "Operation": "Lumpectomy"},
-            {"Date": today, "Name": "Max", "Species": "", "Weight": "",
-             "Drug": "", "Dose_mg": "", "Volume_mL": "", "Vet_Tech": "", "Operation": ""}
         ])
     }
-    return data
-
-fake_records = get_fake_records()
 
 # -----------------------------
-# Layout
+# Layout: Split screen
 # -----------------------------
-left, right = st.columns(2)
+left, right = st.columns([2, 1])  # Wider input, narrow bubbles
 
 with left:
     st.header("📋 Patient & Dosage")
@@ -123,14 +109,32 @@ with right:
         </div>
         """, unsafe_allow_html=True)
 
+        if st.button("💾 Save to Records"):
+            new_row = {
+                "Date": datetime.today().strftime("%Y-%m-%d"),
+                "Name": patient_name,
+                "Species": species,
+                "Weight": weight,
+                "Drug": drug,
+                "Dose_mg": total_mg,
+                "Volume_mL": total_ml,
+                "Vet_Tech": vet_tech,
+                "Operation": operation
+            }
+            st.session_state.patient_records[veterinarian] = pd.concat(
+                [st.session_state.patient_records[veterinarian], pd.DataFrame([new_row])],
+                ignore_index=True
+            )
+            st.success(f"✅ Record added to {veterinarian}'s records!")
+
     else:
         st.info("✅ Enter name, species, weight to calculate.")
 
-# Add space below the calculation bubbles
 with right:
     st.markdown("---")
-    st.header("📚 Example Patient Records")
+    st.header("📚 Patient Records")
     for vet in VETS:
         st.subheader(f"👨‍⚕️ {vet}")
-        df_vet = fake_records[vet]
+        df_vet = st.session_state.patient_records[vet]
         st.dataframe(df_vet, use_container_width=True)
+
