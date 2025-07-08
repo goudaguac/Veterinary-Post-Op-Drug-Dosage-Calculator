@@ -52,7 +52,7 @@ if "patient_records" not in st.session_state:
 # -----------------------------
 # Layout: Split screen
 # -----------------------------
-left, right = st.columns([2, 1])  # Wider input, narrow bubbles
+left, right = st.columns(2)  # Wider input, narrow bubbles
 
 with left:
     st.header("📋 Patient & Dosage")
