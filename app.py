@@ -39,5 +39,5 @@ def get_fake_records():
             {"Date": today, "Name": "Bella", "Species": "Dog", "Weight": 12.5,
              "Drug": "Meloxicam", "Dose_mg": 2.5, "Volume_mL": 0.5, "Vet_Tech": "Alex Tan",
              "Operation": "Spay"},
-            {"Date": today, "Name": "Shadow", "Species": "Cat", "Weight": 4.2
+            {"Date": today, "Name": "Shadow", "Species": "Cat", "Weight": 4.2}
 
