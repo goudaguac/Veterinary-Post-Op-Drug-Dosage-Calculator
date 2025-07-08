@@ -23,13 +23,11 @@ def get_gsheet_client():
     ]
 
     if "google_service_account" in st.secrets:
-        # Load from Streamlit secrets
-        service_account_info = json.loads(json.dumps(st.secrets["google_service_account"]))
+        service_account_info = dict(st.secrets["google_service_account"])
         creds = Credentials.from_service_account_info(
             service_account_info, scopes=scopes
         )
     else:
-        # Fallback for local dev with raw file
         creds = Credentials.from_service_account_file(
             "service_account.json",
             scopes=scopes
