@@ -24,6 +24,11 @@ def get_gsheet_client():
     # Load from Streamlit secrets
     service_account_info = dict(st.secrets["google_service_account"])
 
+service_account_info = json.loads(json.dumps(st.secrets["google_service_account"]))
+st.write("--- DEBUG KEY START ---")
+st.write(repr(service_account_info["private_key"]))
+st.write("--- DEBUG KEY END ---")
+
     creds = Credentials.from_service_account_info(
         service_account_info, scopes=scopes
     )
