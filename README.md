@@ -1,19 +1,16 @@
-# 🐾 Vet Post-Op Drug Dosage Calculator
+# 🐾 Vet Post-Op Drug Dosage Calculator (Local Only)
 
-A simple Streamlit app for calculating approximate dosages for post-op drugs in dogs, cats, birds, or other exotics — plus a basic patient record log.
+A simple Streamlit app for vet techs to calculate safe dosages and see example patient records.
 
-## ✨ Features
+## ✅ Features
 
-- Input patient name, species, weight, operation
-- Vet Tech & Vet authentication (drop-downs)
-- Dosage calculator: MG + ML with clear highlights
-- Route & caution notes in neat boxes
-- Editable patient record table with timestamps
-- Split-screen view for easy workflow
+- Choose patient species, weight, drug, vet tech & vet
+- See exact mg & mL dosage needed
+- Route & caution notes
+- Example fake patient records by vet — no Google Sheets needed
 
-## 🛠 How to Run
+## 🚀 How to Run
 
 ```bash
 pip install -r requirements.txt
 streamlit run app.py
-
