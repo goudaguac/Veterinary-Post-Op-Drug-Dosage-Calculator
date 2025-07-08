@@ -66,7 +66,7 @@ fake_records = get_fake_records()
 # -----------------------------
 # Layout
 # -----------------------------
-left, right = st.columns(2)
+left, right = st.columns([2, 1])  # Wider input, narrower output
 
 with left:
     st.header("📋 Patient & Dosage")
@@ -100,6 +100,8 @@ with left:
     drug = st.selectbox("Select Drug:", list(DRUGS.keys()))
     conc = st.number_input(f"Drug concentration (mg/mL):", value=float(DRUGS[drug]["Concentration"]), step=0.1)
 
+with right:
+    st.markdown("## 💉 Calculation")
     if all([patient_name, species, weight > 0]):
         dose_per_kg = DRUGS[drug].get(species, DRUGS[drug]["Dog"])
         total_mg = round(dose_per_kg * weight, 2)
@@ -107,10 +109,10 @@ with left:
 
         st.markdown(f"""
         <div style="border: 2px solid #4CAF50; padding: 10px; background-color: #F0FFF0;">
-        <h3 style="color:#2E8B57;">💉 Dosage:</h3>
-        <p style="font-size:28px; font-weight:bold;">{total_mg} mg</p>
-        <h3 style="color:#2E8B57;">📏 Volume to Draw:</h3>
-        <p style="font-size:28px; font-weight:bold;">{total_ml} mL</p>
+        <h4 style="color:#2E8B57;">Dosage:</h4>
+        <p style="font-size:24px; font-weight:bold;">{total_mg} mg</p>
+        <h4 style="color:#2E8B57;">Volume:</h4>
+        <p style="font-size:24px; font-weight:bold;">{total_ml} mL</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -124,11 +126,11 @@ with left:
     else:
         st.info("✅ Enter name, species, weight to calculate.")
 
+# Add space below the calculation bubbles
 with right:
-    st.header("📚 Example Patient Records (by Vet)")
+    st.markdown("---")
+    st.header("📚 Example Patient Records")
     for vet in VETS:
         st.subheader(f"👨‍⚕️ {vet}")
         df_vet = fake_records[vet]
         st.dataframe(df_vet, use_container_width=True)
-
-
