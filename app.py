@@ -3,21 +3,59 @@
 import streamlit as st
 import pandas as pd
 from datetime import datetime
+import gspread
+from google.oauth2.service_account import Credentials
 
-# ------------------------
-# Example data
-# ------------------------
+# -----------------------------
+# Streamlit config
+# -----------------------------
+st.set_page_config(page_title="Vet Post-Op Dosage Calculator", layout="wide")
+st.title("🐾 Vet Post-Op Drug Dosage Calculator")
+
+# -----------------------------
+# Google Sheets connector
+# -----------------------------
+def get_gsheet_client():
+    scopes = [
+        "https://www.googleapis.com/auth/spreadsheets",
+        "https://www.googleapis.com/auth/drive",
+    ]
+    creds = Credentials.from_service_account_file(
+        "service_account.json", scopes=scopes
+    )
+    client = gspread.authorize(creds)
+    return client
+
+def get_worksheet(sheet_name, worksheet_name):
+    client = get_gsheet_client()
+    sheet = client.open(sheet_name)
+    worksheet = sheet.worksheet(worksheet_name)
+    return worksheet
+
+def load_vet_records(vet_name):
+    worksheet = get_worksheet("Vet_Drug_Records", vet_name)
+    data = worksheet.get_all_records()
+    return pd.DataFrame(data)
+
+def save_vet_records(vet_name, df):
+    worksheet = get_worksheet("Vet_Drug_Records", vet_name)
+    worksheet.clear()
+    worksheet.update([df.columns.values.tolist()] + df.values.tolist())
+
+# -----------------------------
+# Example drugs
+# -----------------------------
 DRUGS = {
     "Meloxicam": {
         "Dog": 0.2, "Cat": 0.05, "Bird": 0.1, "Unit": "mg/kg",
         "Route": "Injectable or oral",
-        "Note": "Do NOT use with other NSAIDs. Use lowest effective dose.",
+        "Note": "Do NOT use with other NSAIDs.",
         "Concentration": 5
     },
     "Gabapentin": {
         "Dog": 15, "Cat": 7.5, "Bird": 10, "Unit": "mg/kg",
         "Route": "Oral only",
-        "Note": "Sedation may occur. Best given on empty stomach.",
+        "Note": "Sedation may occur.",
         "Concentration": 50
     },
 }
@@ -25,65 +63,48 @@ DRUGS = {
 VET_TECHS = ["Alex Tan", "Jamie Lee", "Morgan Smith"]
 VETS = ["Dr. Wong", "Dr. Patel", "Dr. Fernandez"]
 
-# ------------------------
+# -----------------------------
 # Layout
-# ------------------------
-st.set_page_config(layout="wide")
-
-st.title("🐾 Vet Post-Op Drug Dosage Calculator")
-
+# -----------------------------
 left, right = st.columns(2)
 
 with left:
-    st.header("📋 Patient & Calculation")
+    st.header("📋 Patient & Dosage")
 
-    # Patient name
     patient_name = st.text_input("Patient Name:", "")
-
-    # Species selector: rectangles
     st.markdown("### Species:")
-    species_col1, species_col2, species_col3, species_col4 = st.columns(4)
+    col1, col2, col3, col4 = st.columns(4)
     species = st.session_state.get("species", None)
-
-    with species_col1:
+    with col1:
         if st.button("🐶 Dog"):
             species = "Dog"
-    with species_col2:
+    with col2:
         if st.button("🐱 Cat"):
             species = "Cat"
-    with species_col3:
+    with col3:
         if st.button("🐦 Bird"):
             species = "Bird"
-    with species_col4:
+    with col4:
         if st.button("🦎 Other"):
             species = "Other"
 
     if species == "Other":
-        species = st.text_input("Enter species:", "")
+        species = st.text_input("Enter species:")
 
     st.session_state["species"] = species
 
-    # Operation
     operation = st.text_input("Operation:", placeholder="e.g. Neuter, Dental, Lump removal")
-
-    # Vet tech & vet
     vet_tech = st.selectbox("Vet Tech in charge:", VET_TECHS)
     veterinarian = st.selectbox("Supervising Veterinarian:", VETS)
-
-    # Weight
     weight = st.number_input("Patient weight (kg):", min_value=0.1, step=0.1)
-
-    # Drug
     drug = st.selectbox("Select Drug:", list(DRUGS.keys()))
     conc = st.number_input(f"Drug concentration (mg/mL):", value=float(DRUGS[drug]["Concentration"]), step=0.1)
 
-    # Calculate
     if all([patient_name, species, weight > 0]):
         dose_per_kg = DRUGS[drug].get(species, DRUGS[drug]["Dog"])
         total_mg = round(dose_per_kg * weight, 2)
         total_ml = round(total_mg / conc, 2)
 
-        # Big colorful output
         st.markdown(f"""
         <div style="border: 2px solid #4CAF50; padding: 10px; background-color: #F0FFF0;">
         <h3 style="color:#2E8B57;">💉 Dosage:</h3>
@@ -93,42 +114,42 @@ with left:
         </div>
         """, unsafe_allow_html=True)
 
-        # Route & Note
         st.markdown(f"""
         <div style="border: 1px solid #2196F3; padding: 10px; background-color: #E3F2FD;">
-        <b>Route:</b> {DRUGS[drug]["Route"]}  
-        <br><b>Note:</b> {DRUGS[drug]["Note"]}
+        <b>Route:</b> {DRUGS[drug]["Route"]}<br>
+        <b>Note:</b> {DRUGS[drug]["Note"]}
         </div>
         """, unsafe_allow_html=True)
 
-    else:
-        st.info("✅ Enter name, species, weight to calculate dose.")
+        # Save to Google Sheet (append example)
+        if st.button("💾 Save to Records"):
+            new_row = {
+                "Date": datetime.today().strftime("%Y-%m-%d"),
+                "Name": patient_name,
+                "Species": species,
+                "Weight": weight,
+                "Drug": drug,
+                "Dose_mg": total_mg,
+                "Volume_mL": total_ml,
+                "Vet_Tech": vet_tech,
+                "Vet": veterinarian,
+                "Operation": operation
+            }
+            df_existing = load_vet_records(veterinarian)
+            df_updated = pd.concat([df_existing, pd.DataFrame([new_row])], ignore_index=True)
+            save_vet_records(veterinarian, df_updated)
+            st.success(f"Record saved to {veterinarian}'s worksheet!")
 
+    else:
+        st.info("✅ Enter name, species, weight to calculate.")
 
 with right:
-    st.header("📚 Patient Records (Editable)")
-
-    # Example patient log
-    if "patient_data" not in st.session_state:
-        st.session_state["patient_data"] = pd.DataFrame([
-            {"Date": datetime.today().strftime("%Y-%m-%d"), "Name": "Bella", "Species": "Dog", "Weight": 10.2, 
-             "Drug": "Meloxicam", "Dose_mg": 2.04, "Volume_mL": 0.4, "Vet_Tech": "Jamie Lee", "Vet": "Dr. Wong", "Operation": "Spay"},
-            {"Date": datetime.today().strftime("%Y-%m-%d"), "Name": "Mochi", "Species": "", "Weight": 3.4, 
-             "Drug": "Gabapentin", "Dose_mg": 25.5, "Volume_mL": 0.5, "Vet_Tech": "", "Vet": "", "Operation": ""}
-        ])
-
-    edited_df = st.data_editor(
-        st.session_state["patient_data"],
-        num_rows="dynamic",
-        use_container_width=True
-    )
-
-    st.session_state["patient_data"] = edited_df
-
-    st.write("✅ Records are editable for missing fields and auto-date stamped.")
-
-
-df_history = pd.DataFrame(history_data)
-st.dataframe(df_history)
+    st.header("📚 Patient Records (by Vet)")
+    for vet in VETS:
+        st.subheader(f"👨‍⚕️ {vet}")
+        df_vet = load_vet_records(vet)
+        edited_df = st.data_editor(df_vet, num_rows="dynamic", use_container_width=True, key=vet)
+        if st.button(f"💾 Save {vet} Records"):
+            save_vet_records(vet, edited
 
 
