@@ -22,9 +22,8 @@ def get_gsheet_client():
         "https://www.googleapis.com/auth/drive",
     ]
     # Load from Streamlit secrets
-    service_account_info = json.loads(
-        st.secrets["google_service_account"].to_json()
-    )
+    service_account_info = dict(st.secrets["google_service_account"])
+
     creds = Credentials.from_service_account_info(
         service_account_info, scopes=scopes
     )
