@@ -150,6 +150,6 @@ with right:
         df_vet = load_vet_records(vet)
         edited_df = st.data_editor(df_vet, num_rows="dynamic", use_container_width=True, key=vet)
         if st.button(f"💾 Save {vet} Records"):
-            save_vet_records(vet, edited
+            save_vet_records(vet, edited)
 
 
