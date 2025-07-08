@@ -66,7 +66,7 @@ fake_records = get_fake_records()
 # -----------------------------
 # Layout
 # -----------------------------
-left, right = st.columns([2, 1])  # Wider input, narrower output
+left, right = st.columns(2)
 
 with left:
     st.header("📋 Patient & Dosage")
