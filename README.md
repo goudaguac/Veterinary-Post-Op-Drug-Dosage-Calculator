@@ -44,3 +44,13 @@ This demonstrates how vet techs might refer back to previous calculations.
    ```bash
    git clone https://github.com/yourusername/your-repo-name.git
    cd your-repo-name
+
+2. **Install dependencies**
+   
+ ```pip install -r requirements.txt
+
+3. **Run the app**
+
+```streamlit run app.py
+
+
