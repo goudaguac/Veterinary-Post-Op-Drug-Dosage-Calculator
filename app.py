@@ -45,8 +45,15 @@ def get_worksheet(sheet_name, worksheet_name):
 
 def load_vet_records(vet_name):
     worksheet = get_worksheet("Vet_Drug_Records", vet_name)
-    data = worksheet.get_all_records()
-    return pd.DataFrame(data)
+    records = worksheet.get_all_records()
+    if not records:
+        # If the sheet is empty, seed it!
+        df_seed = seed_example_records(vet_name)
+        worksheet.update([df_seed.columns.values.tolist()] + df_seed.values.tolist())
+        return df_seed
+    else:
+        return pd.DataFrame(records)
+
 
 def save_vet_records(vet_name, df):
     worksheet = get_worksheet("Vet_Drug_Records", vet_name)
@@ -153,6 +160,36 @@ with left:
     else:
         st.info("✅ Enter name, species, weight to calculate.")
 
+def seed_example_records(vet_name):
+    """Return a DataFrame of fake sample records for a vet."""
+    today = datetime.today().strftime("%Y-%m-%d")
+    examples = {
+        "Dr. Wong": [
+            {"Date": today, "Name": "Bella", "Species": "Dog", "Weight": 12.5, 
+             "Drug": "Meloxicam", "Dose_mg": 2.5, "Volume_mL": 0.5, "Vet_Tech": "Alex Tan",
+             "Operation": "Spay"},
+            {"Date": today, "Name": "Shadow", "Species": "Cat", "Weight": 4.2, 
+             "Drug": "Gabapentin", "Dose_mg": 31.5, "Volume_mL": 0.63, "Vet_Tech": "Jamie Lee",
+             "Operation": "Dental"}
+        ],
+        "Dr. Patel": [
+            {"Date": today, "Name": "Luna", "Species": "Bird", "Weight": 0.3, 
+             "Drug": "Meloxicam", "Dose_mg": 0.03, "Volume_mL": 0.01, "Vet_Tech": "Morgan Smith",
+             "Operation": "Wing Repair"},
+            {"Date": today, "Name": "Ollie", "Species": "Dog", "Weight": 18.0, 
+             "Drug": "Gabapentin", "Dose_mg": 270, "Volume_mL": 5.4, "Vet_Tech": "",
+             "Operation": ""}
+        ],
+        "Dr. Fernandez": [
+            {"Date": today, "Name": "Coco", "Species": "Cat", "Weight": 5.1, 
+             "Drug": "Meloxicam", "Dose_mg": 0.25, "Volume_mL": 0.05, "Vet_Tech": "Jamie Lee",
+             "Operation": "Lumpectomy"},
+            {"Date": today, "Name": "Max", "Species": "", "Weight": "", 
+             "Drug": "", "Dose_mg": "", "Volume_mL": "", "Vet_Tech": "", "Operation": ""}
+        ]
+    }
+    return pd.DataFrame(examples.get(vet_name, []))
+
 with right:
     st.header("📚 Patient Records (by Vet)")
     for vet in VETS:
@@ -162,4 +199,5 @@ with right:
         if st.button(f"💾 Save {vet} Records"):
             save_vet_records(vet, edited_df)
             st.success(f"{vet}'s records updated!")
+
 
